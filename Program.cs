@@ -2,6 +2,38 @@ using System;
 using System.Threading.Tasks;
 using SocketIOClient;
 
+// =====================================================
+//  Klass för att hantera chat-funktioner (OOP)
+// =====================================================
+class ChatHandler
+{
+    private SocketIO socket;
+    private string username;
+
+    public ChatHandler(SocketIO socket, string username)
+    {
+        this.socket = socket;
+        this.username = username;
+    }
+
+    // Metod för att skicka meddelande
+    public async Task SendMessage(string text)
+    {
+        await socket.EmitAsync("message", new
+        {
+            sender = username,
+            text = text,
+            timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+        });
+    }
+
+    // Metod för att lämna chatten
+    public async Task Leave()
+    {
+        await socket.EmitAsync("leave", new { username });
+    }
+}
+
 class Program
 {
     //Metod för att hämta användernamn och valider att det inte är tomt 
@@ -27,6 +59,9 @@ class Program
         {
             Path = "/sys25d"
         });
+
+        // Skapar objekt av ChatHandler (OOP)
+        var chat = new ChatHandler(socket, username);
 
         // Händelse: När klienten ansluter till servern
         socket.OnConnected += async (s, e) =>
@@ -67,19 +102,17 @@ class Program
             string userinput = Console.ReadLine();
             if (userinput.Equals("/quit", StringComparison.OrdinalIgnoreCase))
             {
-                await socket.EmitAsync("leave", new { username });
+                await chat.Leave();
                 await socket.DisconnectAsync();
                 break;
             }
             else if (!string.IsNullOrWhiteSpace(userinput))
             {
-                await socket.EmitAsync("message", new
-                {
-                    sender = username,
-                    text = userinput,
-                    timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-                });
+                await chat.SendMessage(userinput);
             }
         }
     }
 }
+
+    
+          
