@@ -2,38 +2,6 @@ using System;
 using System.Threading.Tasks;
 using SocketIOClient;
 
-// =====================================================
-//  Klass för att hantera chat-funktioner (OOP)
-// =====================================================
-class ChatHandler
-{
-    private SocketIO socket;
-    private string username;
-
-    public ChatHandler(SocketIO socket, string username)
-    {
-        this.socket = socket;
-        this.username = username;
-    }
-
-    // Metod för att skicka meddelande
-    public async Task SendMessage(string text)
-    {
-        await socket.EmitAsync("message", new
-        {
-            sender = username,
-            text = text,
-            timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-        });
-    }
-
-    // Metod för att lämna chatten
-    public async Task Leave()
-    {
-        await socket.EmitAsync("leave", new { username });
-    }
-}
-
 class Program
 {
     //Metod för att hämta användernamn och valider att det inte är tomt 
@@ -78,10 +46,8 @@ class Program
         //  inhämtar meddelanden
         socket.On("message", response =>
         {
-            string sender = response.GetValue<string>("sender");
-            string text = response.GetValue<string>("text");
-            string time = response.GetValue<string>("timestamp");
-            Console.WriteLine($"[{time}] {sender}: {text}");
+            var msg = response.GetValue<Message>();
+            Console.WriteLine($"[{msg.Timestamp}] {msg.Sender}: {msg.Text}");
         });
 
         //  Händelser när en användare ansluter eller lämnar chatten  (join/leave)
@@ -113,6 +79,8 @@ class Program
         }
     }
 }
+ 
+         
 
     
           
